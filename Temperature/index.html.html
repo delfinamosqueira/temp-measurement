@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Temperature Over Time</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        #inputs {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        input, button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+        }
+        input {
+            width: 200px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #resetButton {
+            background-color: #e74c3c;
+        }
+        #resetButton:hover {
+            background-color: #c0392b;
+        }
+        #saveButton {
+            background-color: #27ae60;
+        }
+        #saveButton:hover {
+            background-color: #1e8449;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Temperature Over Time</h2>
+
+    <div id="inputs">
+        <input type="number" id="valueInput" placeholder="Enter temperature (°C)" step="0.1">
+        <button onclick="addValue()">Add Temperature</button>
+        <button id="resetButton" onclick="resetChart()">Reset</button>
+        <button id="saveButton" onclick="saveChart()">Save Chart</button>
+    </div>
+
+    <canvas id="freqChart" width="700" height="400"></canvas>
+
+    <script>
+        let temperatures = [];
+        let minutes = [];
+
+        const ctx = document.getElementById('freqChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: [],
+                    fill: false,
+                    borderColor: '#3498db',
+                    backgroundColor: '#3498db',
+                    tension: 0.4,
+                    pointBackgroundColor: [],
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const minute = context.label;
+                                const temperature = context.parsed.y;
+                                return `Minute ${minute}: ${temperature}°C`;
+                            }
+                        },
+                        backgroundColor: '#2c3e50',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8
+                    },
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#2c3e50',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (minutes)',
+                            color: '#2c3e50',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            color: '#2c3e50'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)',
+                            color: '#2c3e50',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: false,
+                        ticks: {
+                            color: '#2c3e50'
+                        }
+                    }
+                }
+            }
+        });
+
+        function addValue() {
+            const inputElement = document.getElementById('valueInput');
+            const value = parseFloat(inputElement.value);
+
+            if (isNaN(value)) {
+                alert('Please enter a valid temperature.');
+                return;
+            }
+
+            // Add next minute automatically
+            const nextMinute = minutes.length + 1;
+            minutes.push(nextMinute);
+            temperatures.push(Math.round(value * 10) / 10); // round to 1 decimal
+
+            chart.data.labels = minutes.map(min => min + ' min');
+            chart.data.datasets[0].data = temperatures;
+            chart.data.datasets[0].pointBackgroundColor = temperatures.map(t => (t >= 25 ? 'red' : 'green'));
+
+            chart.update();
+
+            inputElement.value = '';
+            inputElement.focus();
+        }
+
+        function resetChart() {
+            temperatures = [];
+            minutes = [];
+
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.data.datasets[0].pointBackgroundColor = [];
+
+            chart.update();
+        }
+
+        function saveChart() {
+            const link = document.createElement('a');
+            link.download = 'temperature_over_time.png';
+            link.href = document.getElementById('freqChart').toDataURL('image/png');
+            link.click();
+        }
+    </script>
+
+</body>
+</html>
